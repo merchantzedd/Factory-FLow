@@ -1,21 +1,19 @@
 import { GoogleGenAI } from "@google/genai";
 import { Job, StageAnalysis } from "../types";
 
-const processEnvApiKey = process.env.API_KEY;
-
 export const analyzeProductionData = async (
   jobs: Job[], 
   analysis: StageAnalysis[]
 ): Promise<string> => {
-  if (!processEnvApiKey) {
-    return "API Key not found. Cannot generate AI analysis.";
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    return "API Key not found. Please ensure it is configured.";
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: processEnvApiKey });
+    const ai = new GoogleGenAI({ apiKey });
     
-    // Prepare a summarized text of the data
-    const dataSummary = JSON.stringify({
+    const dataSummary = {
       totalJobs: jobs.length,
       activeJobs: jobs.filter(j => !j.isCompleted).length,
       stageMetrics: analysis.map(a => ({
@@ -23,26 +21,29 @@ export const analyzeProductionData = async (
         avgDays: a.avgDays,
         maxDays: a.maxDays
       }))
-    });
+    };
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `
-        You are a Factory Production Manager Expert. Analyze the following JSON data representing our production line performance.
-        Data: ${dataSummary}
+      model: 'gemini-3-flash-preview',
+      contents: [{
+        parts: [{
+          text: `You are a Factory Production Manager Expert. Analyze the following factory performance data and provide a concise business audit.
+          
+          Data: ${JSON.stringify(dataSummary)}
 
-        Please provide:
-        1. Identification of bottlenecks (stages with unusually high average days).
-        2. Recommendations to improve efficiency.
-        3. A brief summary of the overall health of the production line.
-        
-        Keep the response concise and formatted in Markdown.
-      `,
+          Please provide:
+          1. Bottleneck Analysis: Identify specific stages slowing down production.
+          2. Efficiency Wins: 3 actionable recommendations to improve unit output.
+          3. Profitability Health: A brief assessment of operational health.
+          
+          Format the output in clean Markdown.`
+        }]
+      }]
     });
 
     return response.text || "No analysis could be generated.";
   } catch (error) {
     console.error("Error calling Gemini API:", error);
-    return "Failed to generate analysis due to an error.";
+    return "An error occurred while generating the AI analysis.";
   }
 };

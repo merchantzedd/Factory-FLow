@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { FabricBatch, Job, ProcessStage, JobSizeBreakdown } from '../types';
-import { ClipboardList, Upload, Ruler, Scissors } from 'lucide-react';
+import { FabricBatch, Job, ProcessStage, JobSizeBreakdown, PurchaseOrder } from '../types';
+import { ClipboardList, Upload, Ruler, Scissors, ShoppingBag, Tag, FileText, MessageSquare } from 'lucide-react';
 
 interface JobIssuanceProps {
   fabrics: FabricBatch[];
+  orders: PurchaseOrder[];
   onIssueJob: (job: Job) => void;
 }
 
-const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, onIssueJob }) => {
+const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, orders, onIssueJob }) => {
   const [formData, setFormData] = useState({
+    poId: '',
     fabricBatchId: '',
     styleName: '',
-    buttonQuantity: 0,
+    sleeveDetails: 'Long Sleeve',
+    labelDetails: '',
+    patternOption: '',
     fusingType: '',
     productionLine: 'Line 1',
     ppComments: '',
+    ppSampleComments: '',
     fabricMetersIssued: 0,
     averageDeclared: 0,
   });
@@ -52,6 +57,15 @@ const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, onIssueJob }) => {
     setSizes(prev => ({ ...prev, [key]: Number(val) }));
   };
 
+  const handlePOChange = (poId: string) => {
+    const po = orders.find(o => o.id === poId);
+    setFormData(prev => ({
+      ...prev,
+      poId: poId,
+      styleName: po ? po.styleName : prev.styleName
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fabricBatchId || !formData.styleName || totalQuantity === 0) {
@@ -62,14 +76,18 @@ const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, onIssueJob }) => {
     const newJob: Job = {
       id: Date.now().toString(),
       jobId: `JOB-${Math.floor(Math.random() * 10000)}`,
+      poId: formData.poId || undefined,
       fabricBatchId: formData.fabricBatchId,
       styleName: formData.styleName,
       quantity: totalQuantity,
       sizeBreakdown: sizes,
-      buttonQuantity: Number(formData.buttonQuantity),
+      sleeveDetails: formData.sleeveDetails,
+      labelDetails: formData.labelDetails,
+      patternOption: formData.patternOption,
       fusingType: formData.fusingType,
       productionLine: formData.productionLine,
       ppComments: formData.ppComments,
+      ppSampleComments: formData.ppSampleComments,
       fabricMetersIssued: Number(formData.fabricMetersIssued),
       averageDeclared: Number(formData.averageDeclared),
       checklist: checklist,
@@ -81,20 +99,24 @@ const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, onIssueJob }) => {
         {
           stage: ProcessStage.CUTTING,
           entryDate: new Date().toISOString(),
-          processedQuantity: totalQuantity // Initial input
+          processedQuantity: totalQuantity
         }
       ]
     };
 
     onIssueJob(newJob);
-    // Reset Form
+    
     setFormData({
+      poId: '',
       fabricBatchId: '',
       styleName: '',
-      buttonQuantity: 0,
+      sleeveDetails: 'Long Sleeve',
+      labelDetails: '',
+      patternOption: '',
       fusingType: '',
       productionLine: 'Line 1',
       ppComments: '',
+      ppSampleComments: '',
       fabricMetersIssued: 0,
       averageDeclared: 0,
     });
@@ -119,13 +141,12 @@ const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, onIssueJob }) => {
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-800">New Job Issuance</h2>
-            <p className="text-slate-500 text-sm">Create a new production job with size breakdown and fabric details.</p>
+            <p className="text-slate-500 text-sm">Create a new production job linked to a PO.</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           
-          {/* Left Column: Job Specs */}
           <div className="space-y-6">
             <h3 className="font-semibold text-slate-800 border-b pb-2 flex items-center gap-2">
               <Scissors size={18} />
@@ -133,6 +154,23 @@ const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, onIssueJob }) => {
             </h3>
             
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Select Purchase Order</label>
+                <div className="relative">
+                  <ShoppingBag size={18} className="absolute left-3 top-3 text-slate-400" />
+                  <select
+                    className="w-full rounded-lg border border-slate-300 pl-10 pr-4 py-2.5 focus:border-indigo-500 focus:outline-none bg-white"
+                    value={formData.poId}
+                    onChange={(e) => handlePOChange(e.target.value)}
+                  >
+                    <option value="">-- Direct Job (No PO) --</option>
+                    {orders.map(o => (
+                      <option key={o.id} value={o.id}>{o.poNumber} | {o.clientName} | Total: {o.totalQuantity}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Production Line</label>
                 <select
@@ -159,9 +197,8 @@ const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, onIssueJob }) => {
               </div>
             </div>
 
-            {/* Size Breakdown */}
             <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-               <label className="block text-sm font-bold text-slate-700 mb-3">Size Breakdown</label>
+               <label className="block text-sm font-bold text-slate-700 mb-3">Planned Cutting Breakdown</label>
                <div className="grid grid-cols-5 gap-2 mb-2">
                  <div className="text-center text-xs text-slate-500">S</div>
                  <div className="text-center text-xs text-slate-500">M</div>
@@ -187,21 +224,48 @@ const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, onIssueJob }) => {
                  <span className="text-lg font-bold text-indigo-700">{totalQuantity}</span>
                </div>
             </div>
-
+            
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Buttons Qty</label>
-              <input
-                type="number"
-                required
-                min="0"
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 focus:border-indigo-500 focus:outline-none"
-                value={formData.buttonQuantity}
-                onChange={(e) => setFormData({ ...formData, buttonQuantity: Number(e.target.value) })}
-              />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Sleeve Type</label>
+              <div className="relative">
+                <Tag size={18} className="absolute left-3 top-3 text-slate-400" />
+                <select
+                    className="w-full rounded-lg border border-slate-300 pl-10 pr-4 py-2.5 focus:border-indigo-500 focus:outline-none bg-white"
+                    value={formData.sleeveDetails}
+                    onChange={(e) => setFormData({ ...formData, sleeveDetails: e.target.value })}
+                  >
+                    <option value="Long Sleeve">Long Sleeve</option>
+                    <option value="Short Sleeve">Short Sleeve</option>
+                    <option value="3/4 Sleeve">3/4 Sleeve</option>
+                    <option value="Sleeveless">Sleeveless</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+               <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Labels Details</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Main, Care, Size"
+                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 focus:border-indigo-500 focus:outline-none"
+                    value={formData.labelDetails}
+                    onChange={(e) => setFormData({ ...formData, labelDetails: e.target.value })}
+                  />
+               </div>
+               <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Pattern No. / Option</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. PAT-2024-X"
+                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 focus:border-indigo-500 focus:outline-none"
+                    value={formData.patternOption}
+                    onChange={(e) => setFormData({ ...formData, patternOption: e.target.value })}
+                  />
+               </div>
             </div>
           </div>
 
-          {/* Right Column: Fabric & Checklist */}
           <div className="space-y-6">
             <h3 className="font-semibold text-slate-800 border-b pb-2 flex items-center gap-2">
               <Ruler size={18} />
@@ -270,33 +334,49 @@ const JobIssuance: React.FC<JobIssuanceProps> = ({ fabrics, onIssueJob }) => {
 
             <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                <span className="block text-sm font-medium text-slate-700 mb-3">Resource Checklist</span>
-               <div className="grid grid-cols-2 gap-3">
-                 {[
-                   { id: 'ppSample', label: 'PP Sample' },
-                   { id: 'fabric', label: 'Fabric Check' },
-                   { id: 'fusing', label: 'Fusing' },
-                   { id: 'tags', label: 'Tags / Labels' },
-                   { id: 'trims', label: 'Main Trims' },
-                   { id: 'otherTrims', label: 'Other Trims' },
-                 ].map((item) => (
-                    <label key={item.id} className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={checklist[item.id as keyof typeof checklist]}
-                        onChange={() => toggleCheck(item.id as keyof typeof checklist)}
-                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
-                      />
-                      <span className="text-sm text-slate-600">{item.label}</span>
+               <div className="space-y-4">
+                 <div className="grid grid-cols-2 gap-3">
+                   {[
+                     { id: 'ppSample', label: 'PP Sample' },
+                     { id: 'fabric', label: 'Fabric Check' },
+                     { id: 'fusing', label: 'Fusing' },
+                     { id: 'tags', label: 'Tags / Labels' },
+                     { id: 'trims', label: 'Main Trims' },
+                     { id: 'otherTrims', label: 'Other Trims' },
+                   ].map((item) => (
+                      <label key={item.id} className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={checklist[item.id as keyof typeof checklist]}
+                          onChange={() => toggleCheck(item.id as keyof typeof checklist)}
+                          className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                        />
+                        <span className="text-sm text-slate-600">{item.label}</span>
+                      </label>
+                   ))}
+                 </div>
+                 
+                 <div className={`transition-all duration-300 ${checklist.ppSample ? 'opacity-100 max-h-40' : 'opacity-0 max-h-0 overflow-hidden'}`}>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+                      <MessageSquare size={12} />
+                      PP Sample Specific Comments
                     </label>
-                 ))}
+                    <textarea
+                      rows={2}
+                      placeholder="Enter specific approval notes or revisions for the PP Sample..."
+                      className="w-full rounded-lg border border-indigo-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none bg-white"
+                      value={formData.ppSampleComments}
+                      onChange={(e) => setFormData({ ...formData, ppSampleComments: e.target.value })}
+                    />
+                 </div>
                </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">PP Comments</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">General Production Comments</label>
               <textarea
                 rows={2}
-                placeholder="Instructions..."
+                placeholder="General instructions..."
                 className="w-full rounded-lg border border-slate-300 px-4 py-2.5 focus:border-indigo-500 focus:outline-none"
                 value={formData.ppComments}
                 onChange={(e) => setFormData({ ...formData, ppComments: e.target.value })}

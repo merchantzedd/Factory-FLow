@@ -1,3 +1,4 @@
+
 export enum ProcessStage {
   CUTTING = 'Cutting',
   SEWING = 'Sewing',
@@ -17,12 +18,13 @@ export interface FabricBatch {
   imageUrl: string;
   receivedDate: string;
   supplier: string;
+  linkedPoId?: string;
 }
 
 export interface JobProcessLog {
   stage: ProcessStage;
-  entryDate: string; // ISO String
-  completionDate?: string; // ISO String
+  entryDate: string;
+  completionDate?: string;
   processedQuantity?: number;
   notes?: string;
 }
@@ -49,47 +51,58 @@ export interface CuttingReport {
   fabricDefects: string;
   layerColor: string;
   cuttingDate: string;
+  sizeOutput: JobSizeBreakdown;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  poNumber: string;
+  clientName: string;
+  styleName: string;
+  totalQuantity: number;
+  deadline: string;
+  expectedDeliveryDate?: string;
+  fabricStatus: 'Pending' | 'Ordered' | 'Received';
+  fabricOrderDate?: string;
+  fabricExpectedDate?: string;
+  status: 'Planning' | 'Production' | 'Completed';
 }
 
 export interface Job {
   id: string;
   jobId: string;
+  poId?: string;
   fabricBatchId: string;
   styleName: string;
-  
-  // Quantities
-  quantity: number; // Total derived from sizes
+  quantity: number;
   sizeBreakdown: JobSizeBreakdown;
-  buttonQuantity: number;
-  
-  // Fabric & Consumption
+  sleeveDetails: string;
+  labelDetails: string;
+  patternOption: string;
   fusingType: string;
   fabricMetersIssued: number;
   averageDeclared: number;
-
-  // New Fields
-  productionLine: string; // Line 1, Line 2, etc.
+  productionLine: string;
   jobImageUrl?: string;
   ppComments?: string;
+  ppSampleComments?: string;
   checklist: JobChecklist;
-  
-  // Post Cutting Data
   cuttingReport?: CuttingReport;
-
   currentStage: ProcessStage;
   isCompleted: boolean;
   processHistory: JobProcessLog[];
   createdAt: string;
+  isUrgent?: boolean;
 }
 
 export interface AttendanceEntry {
   id: string;
-  date: string; // YYYY-MM-DD
-  line: string; // Line 1, Line 2...
+  date: string;
+  line: string;
   stage: ProcessStage;
   operators: number;
   helpers: number;
-  manpower: number; // General labor
+  manpower: number;
 }
 
 export interface StageAnalysis {
@@ -98,4 +111,11 @@ export interface StageAnalysis {
   minDays: number;
   maxDays: number;
   totalJobs: number;
+}
+
+export interface FinancialMetric {
+  revenue: number;
+  materialCost: number;
+  laborCost: number;
+  grossProfit: number;
 }

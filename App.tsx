@@ -1,30 +1,40 @@
+
 import React, { useState } from 'react';
-import { LayoutDashboard, ShoppingBasket, ClipboardCheck, Factory, BarChart3, Settings, Users } from 'lucide-react';
-import { AttendanceEntry, FabricBatch, Job, ProcessStage, CuttingReport } from './types';
+import { LayoutDashboard, ShoppingBasket, ClipboardCheck, Factory, BarChart3, Settings, Users, ShoppingBag } from 'lucide-react';
+import { AttendanceEntry, FabricBatch, Job, ProcessStage, CuttingReport, PurchaseOrder } from './types';
 import { INITIAL_FABRICS, INITIAL_JOBS, STAGES_ORDERED } from './constants';
 import FabricInward from './components/FabricInward';
 import JobIssuance from './components/JobIssuance';
 import ProductionFloor from './components/ProductionFloor';
 import Analytics from './components/Analytics';
 import AttendancePanel from './components/AttendancePanel';
+import OrderManagement from './components/OrderManagement';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [fabrics, setFabrics] = useState<FabricBatch[]>(INITIAL_FABRICS);
   const [jobs, setJobs] = useState<Job[]>(INITIAL_JOBS);
   const [attendance, setAttendance] = useState<AttendanceEntry[]>([]);
+  const [orders, setOrders] = useState<PurchaseOrder[]>([]);
 
   const handleAddFabric = (newFabric: FabricBatch) => {
-    setFabrics([newFabric, ...fabrics]);
+    setFabrics(prev => [newFabric, ...prev]);
   };
 
   const handleIssueJob = (newJob: Job) => {
-    setJobs([newJob, ...jobs]);
+    setJobs(prev => [newJob, ...prev]);
+  };
+
+  const handleAddOrder = (newOrder: PurchaseOrder) => {
+    setOrders(prev => [newOrder, ...prev]);
+  };
+
+  const handleUpdateOrder = (updatedOrder: PurchaseOrder) => {
+    setOrders(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
   };
 
   const handleUpdateAttendance = (updatedEntry: AttendanceEntry) => {
     setAttendance(prev => {
-      // Remove existing entry for same date/line/stage if it exists
       const filtered = prev.filter(a => 
         !(a.date === updatedEntry.date && a.line === updatedEntry.line && a.stage === updatedEntry.stage)
       );
@@ -32,23 +42,28 @@ function App() {
     });
   };
 
-  const handleUpdateStage = (jobId: string, outputQty: number, cuttingReport?: CuttingReport) => {
+  const handleToggleUrgent = (jobId: string) => {
+    setJobs(currentJobs => currentJobs.map(job => 
+      job.id === jobId ? { ...job, isUrgent: !job.isUrgent } : job
+    ));
+  };
+
+  const handleUpdateStage = (jobId: string, outputQty: number, cuttingReport?: CuttingReport, notes?: string) => {
     setJobs(currentJobs => currentJobs.map(job => {
       if (job.id !== jobId) return job;
 
       const currentStageIndex = STAGES_ORDERED.indexOf(job.currentStage);
       const now = new Date().toISOString();
 
-      // Update the completion date of the current stage in history
+      // Update the completion date and notes of the current stage in history
       const updatedHistory = job.processHistory.map(log => {
         if (log.stage === job.currentStage && !log.completionDate) {
-          return { ...log, completionDate: now, processedQuantity: outputQty };
+          return { ...log, completionDate: now, processedQuantity: outputQty, notes: notes };
         }
         return log;
       });
 
       const updatedJob = { ...job };
-      // If we received a cutting report (from Cutting stage), attach it
       if (cuttingReport) {
         updatedJob.cuttingReport = cuttingReport;
       }
@@ -72,7 +87,7 @@ function App() {
           {
             stage: nextStage,
             entryDate: now,
-            processedQuantity: outputQty // Initialize next stage with previous output (WIP Logic)
+            processedQuantity: outputQty
           }
         ]
       };
@@ -84,11 +99,12 @@ function App() {
   const completedJobsCount = jobs.filter(j => j.isCompleted).length;
   const totalFabricMeters = fabrics.reduce((sum, f) => sum + f.meters, 0);
 
-  // Calculate staff present today
   const today = new Date().toISOString().split('T')[0];
   const staffPresentToday = attendance
     .filter(a => a.date === today)
     .reduce((sum, a) => sum + a.operators + a.helpers + a.manpower, 0);
+
+  const pendingPOs = orders.filter(o => o.fabricStatus === 'Pending').length;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -122,11 +138,11 @@ function App() {
               </div>
               <div className="bg-white p-6 rounded-xl shadow-md border border-slate-200">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold text-slate-500">Today's Staff</h3>
-                  <Users className="text-slate-400" />
+                  <h3 className="font-semibold text-slate-500">Active POs</h3>
+                  <ShoppingBag className="text-slate-400" />
                 </div>
-                <p className="text-4xl font-bold text-slate-800">{staffPresentToday}</p>
-                <p className="text-sm text-slate-500 mt-2">Operators & Helpers</p>
+                <p className="text-4xl font-bold text-slate-800">{orders.length}</p>
+                <p className="text-sm text-slate-500 mt-2">{pendingPOs} pending fabric</p>
               </div>
             </div>
             
@@ -135,12 +151,14 @@ function App() {
             </div>
           </div>
         );
+      case 'orders':
+        return <OrderManagement orders={orders} jobs={jobs} onAddOrder={handleAddOrder} onUpdateOrder={handleUpdateOrder} />;
       case 'fabric':
-        return <FabricInward fabrics={fabrics} onAddFabric={handleAddFabric} />;
+        return <FabricInward fabrics={fabrics} orders={orders} onAddFabric={handleAddFabric} onUpdateOrder={handleUpdateOrder} />;
       case 'issue':
-        return <JobIssuance fabrics={fabrics} onIssueJob={handleIssueJob} />;
+        return <JobIssuance fabrics={fabrics} orders={orders} onIssueJob={handleIssueJob} />;
       case 'production':
-        return <ProductionFloor jobs={jobs} attendance={attendance} onUpdateStage={handleUpdateStage} />;
+        return <ProductionFloor jobs={jobs} attendance={attendance} onUpdateStage={handleUpdateStage} onToggleUrgent={handleToggleUrgent} />;
       case 'attendance':
         return <AttendancePanel attendanceRecords={attendance} onUpdateAttendance={handleUpdateAttendance} />;
       case 'analytics':
@@ -165,6 +183,10 @@ function App() {
             <LayoutDashboard size={20} />
             Dashboard
           </button>
+          <button onClick={() => setActiveTab('orders')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === 'orders' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800'}`}>
+            <ShoppingBag size={20} />
+            PO Management
+          </button>
           <button onClick={() => setActiveTab('fabric')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === 'fabric' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800'}`}>
             <ShoppingBasket size={20} />
             Fabric Inward
@@ -186,12 +208,6 @@ function App() {
             Analytics
           </button>
         </nav>
-        <div className="p-4 border-t border-slate-800">
-          <button className="flex items-center gap-3 px-4 py-2 text-sm text-slate-400 hover:text-white transition">
-            <Settings size={16} />
-            Settings
-          </button>
-        </div>
       </aside>
 
       {/* Main Content */}
