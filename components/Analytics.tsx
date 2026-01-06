@@ -1,13 +1,14 @@
+
 import React, { useMemo, useState } from 'react';
 import { Job, ProcessStage, StageAnalysis, AttendanceEntry } from '../types';
 import { calculateDaysDiff, STAGES_ORDERED } from '../constants';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
-  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, ComposedChart, Area 
+  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, ComposedChart, Area, ReferenceLine
 } from 'recharts';
 import { 
   BrainCircuit, Loader2, TrendingUp, DollarSign, Clock, Users, 
-  ArrowUpRight, ArrowDownRight, LayoutDashboard, Activity, Target
+  ArrowUpRight, ArrowDownRight, LayoutDashboard, Activity, Target, Zap
 } from 'lucide-react';
 import { analyzeProductionData } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
@@ -20,6 +21,7 @@ interface AnalyticsProps {
 const AVG_SALE_PRICE_PER_UNIT = 25;
 const AVG_FABRIC_COST_PER_METER = 12;
 const AVG_WAGE_PER_STAFF_DAY = 35;
+const UNITS_PER_STAFF_CAPACITY = 15; // Estimated capacity: 1 staff can handle 15 units of WIP
 
 const Analytics: React.FC<AnalyticsProps> = ({ jobs, attendance = [] }) => {
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'efficiency' | 'tat' | 'finance'>('overview');
@@ -58,22 +60,32 @@ const Analytics: React.FC<AnalyticsProps> = ({ jobs, attendance = [] }) => {
     const lines = ['Line 1', 'Line 2', 'Line 3'];
     return lines.map(line => {
       const lineJobs = jobs.filter(j => j.productionLine === line);
+      const activeLineJobs = lineJobs.filter(j => !j.isCompleted);
+      
       const output = lineJobs.reduce((sum, j) => {
         const dispatchLog = j.processHistory.find(h => h.stage === ProcessStage.DISPATCH);
         return sum + (dispatchLog?.processedQuantity || 0);
       }, 0);
       
-      const activeWip = lineJobs.filter(j => !j.isCompleted).length;
+      const wipUnits = activeLineJobs.reduce((sum, j) => sum + j.quantity, 0);
+      const activeWipCount = activeLineJobs.length;
+      
       const totalManpower = attendance
         .filter(a => a.line === line)
         .reduce((sum, a) => sum + a.operators + a.helpers + a.manpower, 0);
 
       const staffVal = totalManpower || 1;
+      const capacity = staffVal * UNITS_PER_STAFF_CAPACITY;
+      const utilization = parseFloat(((wipUnits / capacity) * 100).toFixed(1));
+
       return {
         name: line,
         output,
-        wip: activeWip,
+        wipCount: activeWipCount,
+        wipUnits,
         staff: staffVal,
+        capacity,
+        utilization,
         efficiency: parseFloat(((output / staffVal) * 10).toFixed(1))
       };
     });
@@ -252,50 +264,83 @@ const Analytics: React.FC<AnalyticsProps> = ({ jobs, attendance = [] }) => {
       )}
 
       {activeSubTab === 'efficiency' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in slide-in-from-right-4">
-           <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div className="space-y-6 animate-in slide-in-from-right-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
               <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <Target size={18} className="text-red-500" />
-                Line-Specific Output (Efficiency Index)
+                Line Output & Efficiency Score
               </h3>
-              <div className="h-[400px]">
+              <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={lineEfficiencyData} margin={{left: -20}}>
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="output" barSize={40} fill="#4f46e5" name="Units" />
-                    <Line type="monotone" dataKey="efficiency" stroke="#f59e0b" strokeWidth={3} name="Score" />
+                    <Bar dataKey="output" barSize={40} fill="#4f46e5" name="Units Shipped" />
+                    <Line type="monotone" dataKey="efficiency" stroke="#f59e0b" strokeWidth={3} name="Efficiency Score" />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
-           </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <Zap size={18} className="text-amber-500" />
+                Capacity Utilization (%)
+              </h3>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={lineEfficiencyData} margin={{left: -20}}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip formatter={(value: number) => [`${value}%`, 'Utilization']} />
+                    <Bar dataKey="utilization" barSize={50} radius={[4, 4, 0, 0]}>
+                      {lineEfficiencyData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.utilization > 90 ? '#ef4444' : entry.utilization > 70 ? '#f59e0b' : '#10b981'} 
+                        />
+                      ))}
+                    </Bar>
+                    <ReferenceLine y={80} label={{ position: 'top', value: 'Optimal Threshold (80%)', fontSize: 10, fill: '#64748b' }} stroke="#64748b" strokeDasharray="3 3" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
            
-           <div className="space-y-4">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {lineEfficiencyData.map(line => (
-                <div key={line.name} className="bg-white p-4 rounded-xl border border-slate-200">
+                <div key={line.name} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                    <div className="flex justify-between items-center mb-3">
                       <span className="font-bold text-slate-800">{line.name}</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${line.efficiency > 15 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {line.efficiency > 15 ? 'TARGET REACHED' : 'BELOW TARGET'}
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${line.utilization > 90 ? 'bg-red-100 text-red-700' : line.utilization > 70 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {line.utilization > 90 ? 'OVER CAPACITY' : line.utilization > 70 ? 'OPTIMAL' : 'UNDER CAPACITY'}
                       </span>
                    </div>
                    <div className="space-y-2">
                       <div className="flex justify-between text-xs">
-                        <span className="text-slate-500">Total Units:</span>
-                        <span className="font-semibold">{line.output}</span>
+                        <span className="text-slate-500">Active WIP Units:</span>
+                        <span className="font-semibold">{line.wipUnits}</span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-slate-500">Staff Count:</span>
-                        <span className="font-semibold">{line.staff}</span>
+                        <span className="text-slate-500">Est. Daily Capacity:</span>
+                        <span className="font-semibold">{line.capacity} units</span>
                       </div>
-                      <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Total Manpower:</span>
+                        <span className="font-semibold">{line.staff} staff</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
                         <div 
-                          className={`h-full rounded-full ${line.efficiency > 15 ? 'bg-emerald-500' : 'bg-amber-500'}`} 
-                          style={{ width: `${Math.min(100, line.efficiency * 5)}%` }}
+                          className={`h-full transition-all duration-500 ${line.utilization > 90 ? 'bg-red-500' : line.utilization > 70 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                          style={{ width: `${Math.min(100, line.utilization)}%` }}
                         ></div>
                       </div>
+                      <p className="text-[10px] text-right text-slate-400 font-bold">{line.utilization}% Utilized</p>
                    </div>
                 </div>
               ))}
