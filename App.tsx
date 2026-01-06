@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ShoppingBasket, ClipboardCheck, Factory, BarChart3, Settings, Users, ShoppingBag, BrainCircuit, Menu, X } from 'lucide-react';
+import { LayoutDashboard, ShoppingBasket, ClipboardCheck, Factory, BarChart3, Settings, Users, ShoppingBag, BrainCircuit, Menu, X, FileText } from 'lucide-react';
 import { AttendanceEntry, FabricBatch, Job, ProcessStage, CuttingReport, PurchaseOrder, JobClosureData } from './types';
 import { INITIAL_FABRICS, INITIAL_JOBS, STAGES_ORDERED } from './constants';
 import FabricInward from './components/FabricInward';
@@ -9,6 +9,7 @@ import Analytics from './components/Analytics';
 import AttendancePanel from './components/AttendancePanel';
 import OrderManagement from './components/OrderManagement';
 import SmartPlanning from './components/SmartPlanning';
+import ReportCenter from './components/ReportCenter';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -26,6 +27,7 @@ function App() {
     { id: 'issue', label: 'Issue', icon: ClipboardCheck },
     { id: 'production', label: 'Floor', icon: Factory },
     { id: 'attendance', label: 'Staff', icon: Users },
+    { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'analytics', label: 'BI', icon: BarChart3 },
   ];
 
@@ -161,6 +163,7 @@ function App() {
       case 'issue': return <JobIssuance fabrics={fabrics} orders={orders} onIssueJob={handleIssueJob} />;
       case 'production': return <ProductionFloor jobs={jobs} attendance={attendance} onUpdateStage={handleUpdateStage} onUndoStage={handleUndoStage} onToggleUrgent={handleToggleUrgent} />;
       case 'attendance': return <AttendancePanel attendanceRecords={attendance} onUpdateAttendance={handleUpdateAttendance} />;
+      case 'reports': return <ReportCenter jobs={jobs} orders={orders} />;
       case 'analytics': return <Analytics jobs={jobs} />;
       default: return null;
     }

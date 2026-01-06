@@ -17,12 +17,10 @@ export const generateProductionPlan = async (
     capacity: attendance.filter(a => a.date === new Date().toISOString().split('T')[0])
   };
 
-  const prompt = `You are a Factory Production Optimizer. Based on the following data, generate a Daily Production Plan for today.
+  const prompt = `You are a Factory Production Optimizer. Generate a Daily Production Plan.
+  Strategy: Balance line load while hitting shipment deadlines.
   Data: ${JSON.stringify(context)}
-  
-  Assign pending orders to lines based on current line load and manpower. 
-  Focus on minimizing bottlenecks and meeting the closest deadlines.
-  Provide a JSON response.`;
+  Return JSON.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -61,6 +59,19 @@ export const generateProductionPlan = async (
   } catch (error) {
     console.error("Planning Error:", error);
     throw error;
+  }
+};
+
+export const generateExecutiveReport = async (data: any): Promise<string> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Generate a professional Executive Factory Report based on this data: ${JSON.stringify(data)}. 
+      Include sections for: 1. Production Highlights, 2. Fabric Yield Audit, 3. Critical Risks. Use formal Markdown.`
+    });
+    return response.text || "Report generation failed.";
+  } catch (error) {
+    return "AI Service Error.";
   }
 };
 
