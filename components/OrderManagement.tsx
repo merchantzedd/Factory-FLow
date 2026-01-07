@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
 import { PurchaseOrder, Job, JobSizeBreakdown } from '../types';
 import { 
   ShoppingBag, Calendar, Truck, CheckCircle2, AlertCircle, 
   Plus, Clock, User, Shield, Tag, Box, Scissors, 
   Layers, Package, ChevronRight, X, Info, Hash,
-  ArrowRightCircle
+  ArrowRightCircle, Shirt, Minimize2, Maximize2
 } from 'lucide-react';
 
 interface OrderManagementProps {
@@ -103,81 +104,80 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, jobs, onAddOr
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <div className="flex justify-between items-center bg-white p-8 rounded-[32px] shadow-sm border border-slate-200">
         <div>
            <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-             <div className="bg-indigo-600 p-2 rounded-lg text-white">
+             <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-100">
                <ShoppingBag size={24} />
              </div>
-             PO Management (Set & Unset Units)
+             PO Master Control
            </h2>
-           <p className="text-slate-500 text-sm font-medium">Manage dual-breakdown contracts for unified fabric batches.</p>
+           <p className="text-slate-500 text-sm font-medium">Register dual-breakdown contracts with precise technical attributes.</p>
         </div>
         <button
           onClick={() => setIsFormOpen(!isFormOpen)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 font-bold"
+          className="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-2xl hover:bg-slate-800 transition shadow-xl font-black uppercase text-[10px] tracking-widest"
         >
           {isFormOpen ? <X size={20} /> : <Plus size={20} />}
-          <span>{isFormOpen ? 'Cancel Entry' : 'Create New PO Set'}</span>
+          <span>{isFormOpen ? 'Discard' : 'New Contract'}</span>
         </button>
       </div>
 
       {isFormOpen && (
-        <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4">
-          <div className="bg-slate-900 p-6 text-white flex items-center justify-between">
+        <div className="bg-white rounded-[40px] shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4">
+          <div className="bg-slate-900 p-8 text-white flex items-center justify-between">
             <h3 className="text-lg font-black flex items-center gap-2 uppercase tracking-widest">
                <Layers className="text-indigo-400" size={20} />
-               PO Registration: Combined Breakdown
+               PO Technical Registration
             </h3>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-8">
                <div className="text-right">
-                  <span className="block text-[8px] font-bold text-slate-400">GRAND TOTAL</span>
-                  <span className="text-xl font-black text-indigo-400">{totals.grand} PCS</span>
+                  <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Contract Volume</span>
+                  <span className="text-3xl font-black text-indigo-400">{totals.grand} <span className="text-xs">PCS</span></span>
                </div>
             </div>
           </div>
           
-          <form onSubmit={handleSubmit} className="p-8 space-y-10">
-            {/* Row 1: Core Logistics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase mb-1.5 block">PO # *</label>
-                <input type="text" required placeholder="PO-..." className="w-full rounded-xl border border-slate-200 p-3 text-sm font-bold" value={newOrder.poNumber} onChange={e => setNewOrder({...newOrder, poNumber: e.target.value})} />
+          <form onSubmit={handleSubmit} className="p-10 space-y-12">
+            {/* Identity Group */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">PO # *</label>
+                <input type="text" required placeholder="PO-XXXX" className="w-full rounded-2xl border border-slate-200 p-4 text-sm font-black bg-slate-50 focus:bg-white focus:border-indigo-500 transition outline-none" value={newOrder.poNumber} onChange={e => setNewOrder({...newOrder, poNumber: e.target.value})} />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase mb-1.5 block">Buyer / Client *</label>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Buyer *</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3.5 text-slate-300" size={14} />
-                  <input type="text" required placeholder="Buyer Name" className="w-full pl-9 rounded-xl border border-slate-200 p-3 text-sm font-bold" value={newOrder.buyerName} onChange={e => setNewOrder({...newOrder, buyerName: e.target.value})} />
+                  <User className="absolute left-4 top-4.5 text-slate-300" size={16} />
+                  <input type="text" required placeholder="Buyer Name" className="w-full pl-11 rounded-2xl border border-slate-200 p-4 text-sm font-black bg-slate-50 focus:bg-white focus:border-indigo-500 transition outline-none" value={newOrder.buyerName} onChange={e => setNewOrder({...newOrder, buyerName: e.target.value})} />
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase mb-1.5 block">Brand Identity</label>
-                <input type="text" placeholder="Brand Name" className="w-full rounded-xl border border-slate-200 p-3 text-sm font-bold" value={newOrder.brandName} onChange={e => setNewOrder({...newOrder, brandName: e.target.value})} />
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Brand</label>
+                <input type="text" placeholder="Brand Name" className="w-full rounded-2xl border border-slate-200 p-4 text-sm font-black bg-slate-50 focus:bg-white focus:border-indigo-500 transition outline-none" value={newOrder.brandName} onChange={e => setNewOrder({...newOrder, brandName: e.target.value})} />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase mb-1.5 block">Style Reference</label>
-                <input type="text" placeholder="Style Name" className="w-full rounded-xl border border-slate-200 p-3 text-sm font-bold" value={newOrder.styleName} onChange={e => setNewOrder({...newOrder, styleName: e.target.value})} />
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Style ID</label>
+                <input type="text" placeholder="Style Code" className="w-full rounded-2xl border border-slate-200 p-4 text-sm font-black bg-slate-50 focus:bg-white focus:border-indigo-500 transition outline-none" value={newOrder.styleName} onChange={e => setNewOrder({...newOrder, styleName: e.target.value})} />
               </div>
             </div>
 
-            {/* Row 2: Dual Breakdown Area */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* SET QUANTITY SECTION */}
-              <div className="space-y-4 bg-indigo-50/30 p-6 rounded-2xl border border-indigo-100">
-                <div className="flex justify-between items-center border-b border-indigo-100 pb-3">
+            {/* Breakdown Split */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="space-y-6 bg-indigo-50/30 p-8 rounded-[32px] border border-indigo-100">
+                <div className="flex justify-between items-center border-b border-indigo-100 pb-4">
                    <h4 className="text-[11px] font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
-                     <Package size={14} /> 1. Set Quantity (Assortment)
+                     <Package size={16} /> Set Assortment
                    </h4>
-                   <span className="bg-indigo-600 text-white px-3 py-1 rounded-lg text-[10px] font-black">{totals.set} UNITS</span>
+                   <span className="bg-indigo-600 text-white px-4 py-1.5 rounded-xl text-[11px] font-black">{totals.set} PCS</span>
                 </div>
-                <div className="grid grid-cols-5 gap-2 pt-2">
+                <div className="grid grid-cols-5 gap-3">
                   {(['s', 'm', 'l', 'xl', 'xxl'] as const).map(size => (
-                    <div key={size} className="space-y-1">
-                      <label className="block text-center text-[9px] font-black text-slate-400 uppercase">{size}</label>
+                    <div key={size} className="space-y-2">
+                      <label className="block text-center text-[10px] font-black text-slate-400 uppercase">{size}</label>
                       <input 
                         type="number" placeholder="0"
-                        className="w-full text-center p-2 rounded-lg border border-indigo-200 text-xs font-bold bg-white" 
+                        className="w-full text-center p-3 rounded-xl border border-indigo-200 text-sm font-black bg-white focus:border-indigo-500 outline-none" 
                         value={newOrder.setSizes?.[size] || ''} 
                         onChange={e => handleSizeChange('set', size, e.target.value)}
                       />
@@ -186,21 +186,20 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, jobs, onAddOr
                 </div>
               </div>
 
-              {/* UNSET QUANTITY SECTION */}
-              <div className="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+              <div className="space-y-6 bg-slate-50 p-8 rounded-[32px] border border-slate-200">
+                <div className="flex justify-between items-center border-b border-slate-200 pb-4">
                    <h4 className="text-[11px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                     <Hash size={14} /> 2. Unset Quantity (Loose)
+                     <Hash size={16} /> Unset (Loose) Units
                    </h4>
-                   <span className="bg-slate-700 text-white px-3 py-1 rounded-lg text-[10px] font-black">{totals.unset} UNITS</span>
+                   <span className="bg-slate-700 text-white px-4 py-1.5 rounded-xl text-[11px] font-black">{totals.unset} PCS</span>
                 </div>
-                <div className="grid grid-cols-5 gap-2 pt-2">
+                <div className="grid grid-cols-5 gap-3">
                   {(['s', 'm', 'l', 'xl', 'xxl'] as const).map(size => (
-                    <div key={size} className="space-y-1">
-                      <label className="block text-center text-[9px] font-black text-slate-400 uppercase">{size}</label>
+                    <div key={size} className="space-y-2">
+                      <label className="block text-center text-[10px] font-black text-slate-400 uppercase">{size}</label>
                       <input 
                         type="number" placeholder="0"
-                        className="w-full text-center p-2 rounded-lg border border-slate-200 text-xs font-bold bg-white" 
+                        className="w-full text-center p-3 rounded-xl border border-slate-200 text-sm font-black bg-white focus:border-indigo-500 outline-none" 
                         value={newOrder.unsetSizes?.[size] || ''} 
                         onChange={e => handleSizeChange('unset', size, e.target.value)}
                       />
@@ -210,117 +209,163 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, jobs, onAddOr
               </div>
             </div>
 
-            {/* Row 3: Attributes & Dates */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end">
+            {/* Technical Attributes Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
               <div className="space-y-4">
-                 <div className="flex bg-slate-100 p-1 rounded-xl">
-                    {['Formal', 'Casual'].map(v => (
-                      <button key={v} type="button" onClick={() => setNewOrder({...newOrder, category: v as any})} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition ${newOrder.category === v ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>{v}</button>
-                    ))}
-                 </div>
-                 <div className="flex bg-slate-100 p-1 rounded-xl">
-                    {['Full Sleeve', 'Half Sleeve'].map(v => (
-                      <button key={v} type="button" onClick={() => setNewOrder({...newOrder, sleeveType: v as any})} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition ${newOrder.sleeveType === v ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>{v}</button>
-                    ))}
-                 </div>
-                 <div className="flex bg-slate-100 p-1 rounded-xl">
-                    {['Board Pack', 'Loose Pack'].map(v => (
-                      <button key={v} type="button" onClick={() => setNewOrder({...newOrder, packingType: v as any})} className={`flex-1 py-2 text-[10px] font-black rounded-lg transition ${newOrder.packingType === v ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>{v}</button>
-                    ))}
-                 </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                   <label className="text-[10px] font-black text-red-500 uppercase block">Ship Deadline</label>
-                   <input type="date" className="p-3 rounded-xl border border-red-100 text-xs font-bold w-full" value={newOrder.deadline} onChange={e => setNewOrder({...newOrder, deadline: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                   <label className="text-[10px] font-black text-indigo-500 uppercase block">Exp. Ready</label>
-                   <input type="date" className="p-3 rounded-xl border border-indigo-100 text-xs font-bold w-full" value={newOrder.expectedDeliveryDate} onChange={e => setNewOrder({...newOrder, expectedDeliveryDate: e.target.value})} />
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Garment Category</label>
+                <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-2">
+                   {[
+                     { id: 'Formal', icon: Shirt },
+                     { id: 'Casual', icon: Shirt }
+                   ].map(v => (
+                     <button key={v.id} type="button" onClick={() => setNewOrder({...newOrder, category: v.id as any})} className={`flex-1 py-3.5 flex flex-col items-center gap-2 rounded-xl transition ${newOrder.category === v.id ? 'bg-white shadow-xl text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <v.icon size={18} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{v.id}</span>
+                     </button>
+                   ))}
                 </div>
               </div>
 
-              <div className="flex justify-end">
-                <button type="submit" className="w-full md:w-auto bg-indigo-600 text-white px-10 py-4 rounded-2xl shadow-xl shadow-indigo-100 hover:scale-[1.02] transition font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3">
-                  <ArrowRightCircle size={18} />
-                  Validate & Save PO
-                </button>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Sleeve Type</label>
+                <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-2">
+                   {[
+                     { id: 'Full Sleeve', icon: Maximize2 },
+                     { id: 'Half Sleeve', icon: Minimize2 }
+                   ].map(v => (
+                     <button key={v.id} type="button" onClick={() => setNewOrder({...newOrder, sleeveType: v.id as any})} className={`flex-1 py-3.5 flex flex-col items-center gap-2 rounded-xl transition ${newOrder.sleeveType === v.id ? 'bg-white shadow-xl text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <v.icon size={18} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{v.id}</span>
+                     </button>
+                   ))}
+                </div>
               </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Packing Rigor</label>
+                <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-2">
+                   {[
+                     { id: 'Board Pack', icon: Box },
+                     { id: 'Loose Pack', icon: Package }
+                   ].map(v => (
+                     <button key={v.id} type="button" onClick={() => setNewOrder({...newOrder, packingType: v.id as any})} className={`flex-1 py-3.5 flex flex-col items-center gap-2 rounded-xl transition ${newOrder.packingType === v.id ? 'bg-white shadow-xl text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                        <v.icon size={18} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{v.id}</span>
+                     </button>
+                   ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Final Submission Block */}
+            <div className="pt-10 border-t flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex gap-6">
+                 <div className="space-y-1">
+                    <label className="text-[9px] font-black text-rose-500 uppercase">Ship Deadline</label>
+                    <input type="date" className="p-4 rounded-2xl border border-rose-100 text-xs font-black" value={newOrder.deadline} onChange={e => setNewOrder({...newOrder, deadline: e.target.value})} />
+                 </div>
+                 <div className="space-y-1">
+                    <label className="text-[9px] font-black text-indigo-500 uppercase">Expected Ready</label>
+                    <input type="date" className="p-4 rounded-2xl border border-indigo-100 text-xs font-black" value={newOrder.expectedDeliveryDate} onChange={e => setNewOrder({...newOrder, expectedDeliveryDate: e.target.value})} />
+                 </div>
+              </div>
+
+              <button type="submit" className="w-full md:w-auto bg-slate-900 text-white px-12 py-5 rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-4 group">
+                <ArrowRightCircle size={20} className="group-hover:translate-x-1 transition-transform" />
+                Register Contract
+              </button>
             </div>
           </form>
         </div>
       )}
 
       {/* Grid of Display Cards */}
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-8">
         {orders.map(order => {
           const deadlineDate = new Date(order.deadline);
           const today = new Date();
           const daysLeft = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           
           return (
-            <div key={order.id} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-xl transition-all flex flex-col md:flex-row">
+            <div key={order.id} className="bg-white rounded-[40px] shadow-sm border border-slate-200 overflow-hidden hover:shadow-2xl transition-all flex flex-col xl:flex-row group">
                {/* Identity Section */}
-               <div className="md:w-64 bg-slate-50 p-6 border-r border-slate-100">
-                  <div className="flex items-center gap-2 mb-2">
-                     <span className={`w-2 h-2 rounded-full ${daysLeft < 5 ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></span>
-                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{order.poNumber}</span>
+               <div className="xl:w-80 bg-slate-50 p-8 border-r border-slate-100">
+                  <div className="flex items-center gap-3 mb-3">
+                     <span className={`w-3 h-3 rounded-full shadow-sm ${daysLeft < 5 ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`}></span>
+                     <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{order.poNumber}</span>
                   </div>
-                  <h3 className="text-xl font-black text-slate-800 mb-1">{order.buyerName}</h3>
-                  <p className="text-sm font-bold text-indigo-600 mb-6">{order.brandName}</p>
+                  <h3 className="text-2xl font-black text-slate-800 mb-1 leading-tight">{order.buyerName}</h3>
+                  <p className="text-sm font-bold text-indigo-600 mb-8">{order.brandName}</p>
                   
                   <div className="space-y-4">
-                     <div className="bg-white p-3 rounded-xl border border-slate-200">
-                        <span className="text-[8px] font-black text-slate-400 uppercase block mb-1">Grand Total</span>
-                        <span className="text-xl font-black text-slate-800">{order.totalQuantity} PCS</span>
+                     <div className="bg-white p-5 rounded-[24px] border border-slate-200 shadow-sm">
+                        <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Total Volume</span>
+                        <span className="text-2xl font-black text-slate-800 tracking-tighter">{order.totalQuantity.toLocaleString()} <span className="text-xs">PCS</span></span>
                      </div>
                   </div>
                </div>
 
-               {/* Technical Breakdown Section */}
-               <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* SET DISPLAY */}
-                  <div className="bg-indigo-50/20 p-4 rounded-2xl border border-indigo-50">
-                     <div className="flex justify-between items-center mb-3">
-                        <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Set Assortment</h4>
-                        <span className="text-[11px] font-black text-indigo-800">{order.totalSetQty}</span>
+               {/* Detailed Technical Specs & Breakdown */}
+               <div className="flex-1 p-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                     {/* SET ASSORTMENT BOX */}
+                     <div className="bg-indigo-50/20 p-6 rounded-[32px] border border-indigo-50">
+                        <div className="flex justify-between items-center mb-6">
+                           <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                             <Package size={14} /> Assortment
+                           </h4>
+                           <span className="text-[11px] font-black text-indigo-800 bg-indigo-100 px-3 py-1 rounded-full">{order.totalSetQty}</span>
+                        </div>
+                        <div className="grid grid-cols-5 gap-3">
+                           {(['s','m','l','xl','xxl'] as const).map(sz => (
+                              <div key={sz} className="text-center bg-white/60 p-2 rounded-xl">
+                                 <span className="block text-[8px] font-black text-slate-400 uppercase mb-0.5">{sz}</span>
+                                 <span className="block text-xs font-black text-indigo-600">{order.setSizes[sz]}</span>
+                              </div>
+                           ))}
+                        </div>
                      </div>
-                     <div className="grid grid-cols-5 gap-2">
-                        {(['s','m','l','xl','xxl'] as const).map(sz => (
-                           <div key={sz} className="text-center">
-                              <span className="block text-[8px] font-black text-slate-400 uppercase mb-0.5">{sz}</span>
-                              <span className="block text-xs font-black text-indigo-600">{order.setSizes[sz]}</span>
-                           </div>
-                        ))}
+
+                     {/* UNSET LOOSE BOX */}
+                     <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100">
+                        <div className="flex justify-between items-center mb-6">
+                           <h4 className="text-[11px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                             <Hash size={14} /> Loose Units
+                           </h4>
+                           <span className="text-[11px] font-black text-slate-800 bg-slate-200 px-3 py-1 rounded-full">{order.totalUnsetQty}</span>
+                        </div>
+                        <div className="grid grid-cols-5 gap-3">
+                           {(['s','m','l','xl','xxl'] as const).map(sz => (
+                              <div key={sz} className="text-center bg-white/60 p-2 rounded-xl">
+                                 <span className="block text-[8px] font-black text-slate-400 uppercase mb-0.5">{sz}</span>
+                                 <span className="block text-xs font-black text-slate-600">{order.unsetSizes[sz]}</span>
+                              </div>
+                           ))}
+                        </div>
                      </div>
                   </div>
 
-                  {/* UNSET DISPLAY */}
-                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                     <div className="flex justify-between items-center mb-3">
-                        <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Unset Loose</h4>
-                        <span className="text-[11px] font-black text-slate-800">{order.totalUnsetQty}</span>
+                  {/* Attribute Badges Footer */}
+                  <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                     <div className="flex flex-wrap gap-3">
+                        <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-100 text-[10px] font-black text-slate-600 uppercase tracking-widest border border-slate-200">
+                           <Shirt size={14} className="text-indigo-500" /> {order.category}
+                        </div>
+                        <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-100 text-[10px] font-black text-slate-600 uppercase tracking-widest border border-slate-200">
+                           <Scissors size={14} className="text-emerald-500" /> {order.sleeveType}
+                        </div>
+                        <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-100 text-[10px] font-black text-slate-600 uppercase tracking-widest border border-slate-200">
+                           <Box size={14} className="text-amber-500" /> {order.packingType}
+                        </div>
                      </div>
-                     <div className="grid grid-cols-5 gap-2">
-                        {(['s','m','l','xl','xxl'] as const).map(sz => (
-                           <div key={sz} className="text-center">
-                              <span className="block text-[8px] font-black text-slate-400 uppercase mb-0.5">{sz}</span>
-                              <span className="block text-xs font-black text-slate-600">{order.unsetSizes[sz]}</span>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-
-                  <div className="lg:col-span-2 pt-4 border-t border-slate-100 flex justify-between items-center">
-                     <div className="flex gap-4">
-                        <div className="px-3 py-1 rounded-full bg-slate-100 text-[9px] font-black text-slate-500 uppercase">{order.category}</div>
-                        <div className="px-3 py-1 rounded-full bg-slate-100 text-[9px] font-black text-slate-500 uppercase">{order.sleeveType}</div>
-                        <div className="px-3 py-1 rounded-full bg-slate-100 text-[9px] font-black text-slate-500 uppercase">{order.packingType}</div>
-                     </div>
-                     <div className="text-right">
-                        <span className="text-[9px] font-black text-slate-400 uppercase block">Shipment Due</span>
-                        <span className="text-xs font-black text-red-500">{order.deadline}</span>
+                     <div className="flex items-center gap-8">
+                        <div className="text-right">
+                           <span className="text-[9px] font-black text-slate-300 uppercase block tracking-widest">Ship Deadline</span>
+                           <span className={`text-sm font-black ${daysLeft < 3 ? 'text-rose-600' : 'text-slate-700'}`}>{order.deadline}</span>
+                        </div>
+                        <div className="bg-slate-900 p-3 rounded-2xl text-white hover:scale-110 transition cursor-pointer">
+                           <ChevronRight size={20} />
+                        </div>
                      </div>
                   </div>
                </div>
